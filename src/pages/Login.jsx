@@ -1,34 +1,27 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { login as mockLogin, setAuthSession } from '../utils/mockAuth';
 
 const Login = () => {
-  const [step, setStep] = useState('email'); // email, otp, success
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
-  const [otp, setOtp] = useState('');
-  const [error, setError] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = '';
 
-  // Mock send OTP
-  const sendOtp = async (email) => {
-    setLoading(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     setError('');
-    // Replace with real API call
-    await new Promise(r => setTimeout(r, 1000));
-    setLoading(false);
-    setStep('otp');
-  };
-
-  // Mock verify OTP
-  const verifyOtp = async (email, otp) => {
     setLoading(true);
-    setError('');
-    // Replace with real API call
-    await new Promise(r => setTimeout(r, 1000));
-    if (otp === '123456') {
-      setStep('success');
-    } else {
-      setError('Invalid OTP');
+    try {
+      const { token, user } = await mockLogin(email, password);
+      setAuthSession(token, user);
+      navigate('/dashboard', { replace: true });
+    } catch (err) {
+      setError(err?.message || 'Login failed');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
@@ -40,84 +33,57 @@ const Login = () => {
       background: '#f6f7fb'
     }}>
       <form
+        onSubmit={handleSubmit}
         style={{
           background: '#fff',
-          padding: '32px',
-          borderRadius: '8px',
+          padding: 32,
+          borderRadius: 8,
           boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-          minWidth: '320px'
-        }}
-        onSubmit={e => {
-          e.preventDefault();
-          if (step === 'email') sendOtp(email);
-          else if (step === 'otp') verifyOtp(email, otp);
+          minWidth: 320
         }}
       >
-        <h2 style={{ marginBottom: '24px', textAlign: 'center' }}>Login</h2>
-        {step === 'email' && (
-          <div style={{ marginBottom: '16px' }}>
-            <input
-              type="email"
-              placeholder="Enter your email"
-              value={email}
-              required
-              onChange={e => setEmail(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '10px',
-                borderRadius: '4px',
-                border: '1px solid #ddd'
-              }}
-            />
-          </div>
-        )}
-        {step === 'otp' && (
-          <div style={{ marginBottom: '16px' }}>
-            <input
-              type="text"
-              placeholder="Enter OTP"
-              value={otp}
-              required
-              onChange={e => setOtp(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '10px',
-                borderRadius: '4px',
-                border: '1px solid #ddd'
-              }}
-            />
-          </div>
-        )}
-        {step === 'success' && (
-          <div style={{
-            marginBottom: '16px',
-            color: 'green',
-            textAlign: 'center'
-          }}>
-            Login Successful!
-          </div>
-        )}
-        {error && <div style={{ color: 'red', marginBottom: '12px' }}>{error}</div>}
-        {(step === 'email' || step === 'otp') && (
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              width: '100%',
-              padding: '10px',
-              background: '#007bff',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-              fontWeight: 'bold',
-              cursor: 'pointer'
-            }}
-          >
-            {loading
-              ? (step === 'email' ? 'Sending OTP...' : 'Verifying...')
-              : (step === 'email' ? 'Send OTP' : 'Verify OTP')}
-          </button>
-        )}
+        <h2 style={{ marginBottom: 24, textAlign: 'center' }}>Login</h2>
+
+        <div style={{ marginBottom: 12 }}>
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            required
+            onChange={(e) => setEmail(e.target.value)}
+            style={{ width: '100%', padding: 10, borderRadius: 4, border: '1px solid #ddd' }}
+          />
+        </div>
+
+        <div style={{ marginBottom: 16 }}>
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            required
+            onChange={(e) => setPassword(e.target.value)}
+            style={{ width: '100%', padding: 10, borderRadius: 4, border: '1px solid #ddd' }}
+          />
+        </div>
+
+        {error && <div style={{ color: 'red', marginBottom: 12 }}>{error}</div>}
+
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            width: '100%',
+            padding: 10,
+            background: '#007bff',
+            color: '#fff',
+            border: 'none',
+            borderRadius: 4,
+            fontWeight: 'bold',
+            cursor: 'pointer'
+          }}
+        >
+          {loading ? 'Signing in...' : 'Sign in'}
+        </button>
       </form>
     </div>
   );
